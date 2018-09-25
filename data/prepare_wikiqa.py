@@ -15,6 +15,12 @@ def prepare_wikiQA():
     infiles = [os.path.join(datadir, path) for path in infiles]
     outfile = os.path.join(rawdir, 'raw_wiki_data.txt')
 
+    if not os.path.exists(datadir):
+        error_msg = "Does the WikiQACorpus file exists?\n" + \
+            "If not run:\ncd data/raw/\n" + \
+            f"wget {WIKIQA_URL}\nunzip WikiQACorpus.zip"
+        print(error_msg)
+
     if os.path.exists(outfile):
         if not click.confirm(f"{outfile} exists already.\nOverwrite?"):
             sys.exit(-1)
@@ -26,13 +32,10 @@ def prepare_wikiQA():
                     for line in f2:
                         r = line.strip().split('\t')
                         f.write('%s\t%s\t%s\n' % (r[0], r[1], r[2]))
+        print(f"Wiki corpus created at\n\t{outfile}")
     except FileExistsError as e:
-        error_msg = f"FileExistsError, {e} not found." + \
-            "Does the WikiQACorpus file exists?\n" + \
-            "If not run:\ncd data/raw/\n" + \
-            f"wget {WIKIQA_URL}\nunzip WikiQACorpus.zip"
+        error_msg = f"FileExistsError, {e} not found."
         print(error_msg)
-    print(f"Wiki corpus created at\n\t{outfile}")
 
 
 if __name__ == '__main__':
