@@ -72,64 +72,65 @@ def prepare_and_preprocess(ctx, save: bool=False):
 
     try:
         corpus_path = cfg.inputs['share']['raw_corpus']
-
-        if not os.path.exists(corpus_path):
-            error_msg = f"{corpus_path} does not exists.\n" + \
-                    "Run prepare_wikiqa.py in data directory."
-            logger.info(error_msg)
-            raise FileExistsError(error_msg)
-
-        corpus_q, corpus_d, rels = prep.from_one_corpus(corpus_path)
-
-        logger.info(f"total questions: {len(corpus_q)}")
-        logger.info(f"total documents: {len(corpus_d)}")
-        logger.info(f"total relations: {len(rels)}")
-
-        if not len(corpus_q) or not len(corpus_d):
-            error_msg = f"{corpus_path} is empty."
-            logger.info(error_msg)
-            raise IOError(error_msg)
-
-        rel_train, rel_valid, rel_test = prep.split_train_valid_test(rels)
-        if save:
-            relations_files = ['relation_train.txt', 'relation_valid.txt',
-                               'relation_test.txt']
-            relations_paths = [os.path.join(pp_dir, rf)
-                               for rf in relations_files]
-            for path, data in zip(relations_paths, [rel_train, rel_valid,
-                                                    rel_test]):
-                prep.save_relations(path, data)
-
-        logger.info(f"Saved relations splits to {pp_dir}")
-
-        click.echo('Preprocessing data...')
-
-        inputs = {'questions': corpus_q, 'documents': corpus_d}
-        train = formatter.from_inputs(inputs, rel_train, stage='train')
-        test = formatter.from_inputs(inputs, rel_test, stage='train')
-        val = formatter.from_inputs(inputs, rel_valid, stage='train')
-
-        processed_train = pre.fit_transform(train.values, stage='train')
-        processed_val = pre.transform(val.values, stage='train')
-        processed_test = pre.transform(test.values, stage='train')
-
-        click.echo('Saving preprocessed data...')
-
-        processed_train.save(dirpath=pp_dir, filename='train.dill')
-        processed_test.save(dirpath=pp_dir, filename='test.dill')
-        processed_val.save(dirpath=pp_dir, filename='val.dill')
-
-        pre.save(dirpath=pp_dir)
-
-        click.echo('Saving corpus questions and documents...')
-        corpus_d_path = os.path.join(pp_dir, 'documents.dill')
-        dill.dump(corpus_d, open(corpus_d_path, 'wb'))
-        corpus_q_path = os.path.join(pp_dir, 'questions.dill')
-        dill.dump(corpus_d, open(corpus_q_path, 'wb'))
-
-    except KeyError:
+    except KeyError as e:
         logger.error(
             "Config file doesn't have corpus path in inputs.share.corpus")
+        raise
+
+    if not os.path.exists(corpus_path):
+        error_msg = f"{corpus_path} does not exists.\n" + \
+                "Run prepare_wikiqa.py in data directory."
+        logger.info(error_msg)
+        raise FileExistsError(error_msg)
+
+    corpus_q, corpus_d, rels = prep.from_one_corpus(corpus_path)
+
+    logger.info(f"total questions: {len(corpus_q)}")
+    logger.info(f"total documents: {len(corpus_d)}")
+    logger.info(f"total relations: {len(rels)}")
+
+    if not len(corpus_q) or not len(corpus_d):
+        error_msg = f"{corpus_path} is empty."
+        logger.info(error_msg)
+        raise IOError(error_msg)
+
+    rel_train, rel_valid, rel_test = prep.split_train_valid_test(rels)
+    if save:
+        relations_files = ['relation_train.txt', 'relation_valid.txt',
+                           'relation_test.txt']
+        relations_paths = [os.path.join(pp_dir, rf)
+                           for rf in relations_files]
+        for path, data in zip(relations_paths, [rel_train, rel_valid,
+                                                rel_test]):
+            prep.save_relations(path, data)
+
+    logger.info(f"Saved relations splits to {pp_dir}")
+
+    click.echo('Preprocessing data...')
+
+    inputs = {'questions': corpus_q, 'documents': corpus_d}
+    train = formatter.from_inputs(inputs, rel_train, stage='train')
+    test = formatter.from_inputs(inputs, rel_test, stage='train')
+    val = formatter.from_inputs(inputs, rel_valid, stage='train')
+
+    processed_train = pre.fit_transform(train.values, stage='train')
+    processed_val = pre.transform(val.values, stage='train')
+    processed_test = pre.transform(test.values, stage='train')
+
+    click.echo('Saving preprocessed data...')
+
+    processed_train.save(dirpath=pp_dir, filename='train.dill')
+    processed_test.save(dirpath=pp_dir, filename='test.dill')
+    processed_val.save(dirpath=pp_dir, filename='val.dill')
+
+    pre.save(dirpath=pp_dir)
+
+    click.echo('Saving corpus questions and documents...')
+    corpus_d_path = os.path.join(pp_dir, 'documents.dill')
+    dill.dump(corpus_d, open(corpus_d_path, 'wb'))
+    corpus_q_path = os.path.join(pp_dir, 'questions.dill')
+    dill.dump(corpus_d, open(corpus_q_path, 'wb'))
+
 
 
 @cli.command()
