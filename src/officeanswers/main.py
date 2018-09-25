@@ -187,7 +187,7 @@ def train(ctx):
         logger.error("File exists already.")
 
     click.echo('\nPredict...')
-    processed_test = datapack.load_datapack(pr_dir, 'test.dill')
+    processed_test = datapack.load_datapack(pp_dir, 'test.dill')
     generator_test = generators.PointGenerator(processed_test,
                                                task,
                                                stage='train')
