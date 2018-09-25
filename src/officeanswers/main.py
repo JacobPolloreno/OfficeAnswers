@@ -139,23 +139,23 @@ def train(ctx):
     click.echo('Loading preprocessed data...')
 
     cfg = ctx.obj['CONFIG']
-    data_dir = os.path.abspath('./data')
-    pre_dir = os.path.join(data_dir, 'preprocessed')
+    pp_dir = cfg.paths['preprocess_dir']
+    pr_dir = cfg.paths['processed_dir']
 
-    processed_train = datapack.load_datapack(pre_dir, 'train.dill')
-    processed_val = datapack.load_datapack(pre_dir, 'val.dill')
+    processed_train = datapack.load_datapack(pp_dir, 'train.dill')
+    processed_val = datapack.load_datapack(pp_dir, 'val.dill')
 
     task = tasks.Ranking()
     input_shapes = processed_train.context['input_shapes']
     generator_train = generators.PointGenerator(processed_train,
                                                 task,
                                                 stage='train')
-    processed_val = datapack.load_datapack(pre_dir, 'val.dill')
+    processed_val = datapack.load_datapack(pp_dir, 'val.dill')
     generator_val = generators.PointGenerator(processed_val,
                                               task,
                                               stage='train')
 
-    model_type = cfg.model['model_py']
+    model_type = cfg.model['type']
 
     click.echo('Loading model...')
     if model_type.lower() == 'dssm':
@@ -182,12 +182,12 @@ def train(ctx):
 
     click.echo('Saved model...')
     try:
-        model.save(os.path.join(data_dir, 'processed'))
+        model.save(pr_dir)
     except FileExistsError:
         logger.error("File exists already.")
 
     click.echo('\nPredict...')
-    processed_test = datapack.load_datapack(pre_dir, 'test.dill')
+    processed_test = datapack.load_datapack(pr_dir, 'test.dill')
     generator_test = generators.PointGenerator(processed_test,
                                                task,
                                                stage='train')
@@ -206,12 +206,11 @@ def predict(ctx):
     click.echo('Running predictions...')
 
     cfg = ctx.obj['CONFIG']
-    data_dir = os.path.abspath('./data')
-    pre_dir = os.path.join(data_dir, 'preprocessed')
+    pp_dir = cfg.paths['preprocess_dir']
+    pr_dir = cfg.paths['processed_dir']
 
     model_type = cfg.model['model_py']
-    corpus_d_path = os.path.join(pre_dir, 'documents.dill')
-    model_path = os.path.join(data_dir, 'processed')
+    corpus_d_path = os.path.join(pp_dir, 'documents.dill')
 
     docs = dill.load(open(corpus_d_path, 'rb'))
     doc_lookup = list(docs.keys())
@@ -222,10 +221,11 @@ def predict(ctx):
     docs_df['QID'] = 'Q'
 
     task = tasks.Ranking()
-    pre = engine.load_preprocessor(dirpath=pre_dir)
+    pre = engine.load_preprocessor(dirpath=pp_dir)
+
     click.echo('Loading model...')
     if model_type.lower() == 'dssm':
-        model = engine.load_model(model_path)
+        model = engine.load_model(pr_dir)
         query = click.prompt("What do you want to search?", type=str)
         while query and query != 'exit':
             query_df = docs_df.copy()
