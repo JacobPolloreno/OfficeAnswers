@@ -30,6 +30,7 @@ echo "Installing dependencies..."
 git clone https://github.com/JacobPolloreno/MatchZoo.git
 python MatchZoo/setup.py install
 pip install -r build/requirements.txt
+$py -c "import nltk;nltk.download('stopwords');nltk.download('punkt')"
 
 echo "Downloading dataset..."
 cd data/raw/

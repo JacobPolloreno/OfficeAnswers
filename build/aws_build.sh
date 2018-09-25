@@ -3,8 +3,8 @@
 echo "Office Answers Project"
 echo "----------------------"
 
-py=python3
-py36_error_msg="Python 3.6 is not installed.\nPlease install or modify this script to use proper Python executable"
+py=python
+py3_error_msg="Python 3.6 is not installed.\nPlease install or modify this script to use proper Python executable"
 
 echo "Should be in a conda virtualenv with TF+Keras. Activate with 'source activate tensorflow_p36'"
 read -p "Continue to install packages?" -n 1 -r
@@ -26,6 +26,7 @@ then
 	git clone https://github.com/JacobPolloreno/MatchZoo.git
 	python MatchZoo/aws_setup.py install
 	pip install -r build/requirements.txt
+	$py -c "import nltk;nltk.download('stopwords');nltk.download('punkt')"
 
 	echo "Downloading dataset..."
 	cd data/raw/
