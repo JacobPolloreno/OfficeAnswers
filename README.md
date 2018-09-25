@@ -3,22 +3,23 @@ Organization-specific informational retrieval system.
 
 #### Installation
 
-##### Locally
+```sh
+git clone https://github.com/JacobPolloreno/OfficeAnswers.git
+cd OfficeAnswers
+```
+
+##### Locally with virtualenv
 **Assumes _virtualenv_ is installed. If not `pip install virtualenv`**
 
 ```sh
-git clone https://github.com/JacobPolloreno/OfficeAnswers.git
-cd OfficeAnswers
+source venv/bin/activate
 bash build/run_build.sh
 ```
 
-##### AWS
-**Assumes _conda env_ with TF + Keras Py36.**
+##### AWS with _Conda env_ with TF + Keras Py36
 
 ```sh
 source activate <CONDA_ENV_NAME>
-git clone https://github.com/JacobPolloreno/OfficeAnswers.git
-cd OfficeAnswers
 bash build/aws_build.sh
 ```
 
