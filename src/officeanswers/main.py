@@ -79,7 +79,7 @@ def prepare_and_preprocess(ctx, save: bool=False):
 
     if not os.path.exists(corpus_path):
         error_msg = f"{corpus_path} does not exists.\n" + \
-                "Run prepare_wikiqa.py in data directory."
+            "Run prepare_wikiqa.py in data directory."
         logger.info(error_msg)
         raise FileExistsError(error_msg)
 
@@ -119,18 +119,22 @@ def prepare_and_preprocess(ctx, save: bool=False):
 
     click.echo('Saving preprocessed data...')
 
-    processed_train.save(dirpath=pp_dir, filename='train.dill')
-    processed_test.save(dirpath=pp_dir, filename='test.dill')
-    processed_val.save(dirpath=pp_dir, filename='val.dill')
+    processed_train.save(dirpath=pp_dir,
+                         filename=cfg.inputs['train']['datapack'])
+    processed_test.save(dirpath=pp_dir,
+                        filename=cfg.inputs['test']['datapack'])
+    processed_val.save(dirpath=pp_dir,
+                       filename=cfg.inputs['valid']['datapack'])
 
     pre.save(dirpath=pp_dir)
 
     click.echo('Saving corpus questions and documents...')
-    corpus_d_path = os.path.join(pp_dir, 'documents.dill')
+    corpus_d_path = os.path.join(pp_dir,
+                                 cfg.inputs['share']['documents'])
     dill.dump(corpus_d, open(corpus_d_path, 'wb'))
-    corpus_q_path = os.path.join(pp_dir, 'questions.dill')
+    corpus_q_path = os.path.join(pp_dir,
+                                 cfg.inputs['share']['questions'])
     dill.dump(corpus_d, open(corpus_q_path, 'wb'))
-
 
 
 @cli.command()
@@ -142,15 +146,16 @@ def train(ctx):
     pp_dir = cfg.paths['preprocess_dir']
     pr_dir = cfg.paths['processed_dir']
 
-    processed_train = datapack.load_datapack(pp_dir, 'train.dill')
-    processed_val = datapack.load_datapack(pp_dir, 'val.dill')
+    processed_train = datapack.load_datapack(pp_dir,
+                                             cfg.inputs['train']['datapack'])
+    processed_val = datapack.load_datapack(pp_dir,
+                                           cfg.inputs['valid']['datapack'])
 
     task = tasks.Ranking()
     input_shapes = processed_train.context['input_shapes']
     generator_train = generators.PointGenerator(processed_train,
                                                 task,
                                                 stage='train')
-    processed_val = datapack.load_datapack(pp_dir, 'val.dill')
     generator_val = generators.PointGenerator(processed_val,
                                               task,
                                               stage='train')
@@ -174,11 +179,12 @@ def train(ctx):
     logger.info(model._backend.summary())
 
     click.echo('Training model...')
+    train_params = cfg.inputs['train']
     model.fit_generator(generator_train,
-                        steps_per_epoch=200,
+                        steps_per_epoch=train_params['steps_per_epoch'],
                         val_generator=generator_val,
-                        epochs=3,
-                        verbose=1)
+                        epochs=train_params['epochs'],
+                        verbose=train_params['verbose'])
 
     click.echo('Saved model...')
     try:
@@ -187,7 +193,8 @@ def train(ctx):
         logger.error("File exists already.")
 
     click.echo('\nPredict...')
-    processed_test = datapack.load_datapack(pp_dir, 'test.dill')
+    processed_test = datapack.load_datapack(pp_dir,
+                                            cfg.inputs['test']['datapack'])
     generator_test = generators.PointGenerator(processed_test,
                                                task,
                                                stage='train')
@@ -210,7 +217,8 @@ def predict(ctx):
     pr_dir = cfg.paths['processed_dir']
 
     model_type = cfg.model['type']
-    corpus_d_path = os.path.join(pp_dir, 'documents.dill')
+    corpus_d_path = os.path.join(pp_dir,
+                                 cfg.inputs['share']['documents'])
 
     docs = dill.load(open(corpus_d_path, 'rb'))
     doc_lookup = list(docs.keys())
