@@ -209,7 +209,7 @@ def predict(ctx):
     pp_dir = cfg.paths['preprocess_dir']
     pr_dir = cfg.paths['processed_dir']
 
-    model_type = cfg.model['model_py']
+    model_type = cfg.model['type']
     corpus_d_path = os.path.join(pp_dir, 'documents.dill')
 
     docs = dill.load(open(corpus_d_path, 'rb'))
