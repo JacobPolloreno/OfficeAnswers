@@ -17,18 +17,12 @@ else
 	exit -1
 fi
 
-if $py -c 'import pkgutil; exit(not pkgutil.find_loader("virtualenv"))'; then
-	echo 'virtualenv not found. Do pip install virtualenv'
-	exit 1
-fi
-
 echo "Creating virtual environment for project..."
-virtualenv venv
-source ./venv/bin/activate
+source activate tensorflow_p36
 
 echo "Installing dependencies..."
 git clone https://github.com/JacobPolloreno/MatchZoo.git
-python MatchZoo/setup.py install
+python MatchZoo/aws_setup.py install
 pip install -r build/requirements.txt
 
 echo "Downloading dataset..."
