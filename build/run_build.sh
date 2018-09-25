@@ -37,6 +37,7 @@ wget https://download.microsoft.com/download/E/5/F/E5FCFCEE-7005-4814-853D-DAA7C
 unzip WikiQACorpus.zip
 
 echo "Preparing WIKIAQ dataset..."
-$py prepare_wikiqa.py
+cd ../..
+$py ./data/prepare_wikiqa.py
 
 echo "Done"

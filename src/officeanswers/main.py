@@ -51,18 +51,18 @@ def cli(ctx, debug, model_config_file):
 def prepare_and_preprocess(ctx, save: bool=False):
     click.echo('Preparing data model...')
 
-    data_dir = os.path.abspath('./data/preprocessed')
-    if not os.path.exists(data_dir):
-        os.mkdir(data_dir)
-    elif not os.path.isdir(data_dir):
+    cfg = ctx.obj['CONFIG']
+    pp_dir = cfg.paths['preprocess_dir']
+
+    if not os.path.exists(pp_dir):
+        os.mkdir(pp_dir)
+    elif not os.path.isdir(pp_dir):
         error_msg = "Data path already exists and is a file." + \
-            "Should be a directory"
+            "Should be a directory, [{pp_dir}]"
         logger.error(error_msg)
         raise FileExistsError(error_msg)
 
-    cfg = ctx.obj['CONFIG']
-    model_type = cfg.model['model_py']
-
+    model_type = cfg.model['type']
     if model_type.lower() == 'dssm':
         prep = DSSMPrepare()
         formatter = DSSMFormatter()
@@ -71,24 +71,36 @@ def prepare_and_preprocess(ctx, save: bool=False):
         raise NotImplementedError(f"Model type {model_type} not implemented")
 
     try:
-        corpus_q, corpus_d, rels = prep.from_one_corpus(
-            cfg.inputs['share']['raw_corpus'])
+        corpus_path = cfg.inputs['share']['raw_corpus']
+
+        if not os.path.exists(corpus_path):
+            error_msg = f"{corpus_path} does not exists.\n" + \
+                    "Run prepare_wikiqa.py in data directory."
+            logger.info(error_msg)
+            raise FileExistsError(error_msg)
+
+        corpus_q, corpus_d, rels = prep.from_one_corpus(corpus_path)
 
         logger.info(f"total questions: {len(corpus_q)}")
         logger.info(f"total documents: {len(corpus_d)}")
         logger.info(f"total relations: {len(rels)}")
 
+        if not len(corpus_q) or not len(corpus_d):
+            error_msg = f"{corpus_path} is empty."
+            logger.info(error_msg)
+            raise IOError(error_msg)
+
         rel_train, rel_valid, rel_test = prep.split_train_valid_test(rels)
         if save:
             relations_files = ['relation_train.txt', 'relation_valid.txt',
                                'relation_test.txt']
-            relations_paths = [os.path.join(data_dir, rf)
+            relations_paths = [os.path.join(pp_dir, rf)
                                for rf in relations_files]
             for path, data in zip(relations_paths, [rel_train, rel_valid,
                                                     rel_test]):
                 prep.save_relations(path, data)
 
-        logger.info(f"Saved relations splits to {data_dir}")
+        logger.info(f"Saved relations splits to {pp_dir}")
 
         click.echo('Preprocessing data...')
 
@@ -103,16 +115,16 @@ def prepare_and_preprocess(ctx, save: bool=False):
 
         click.echo('Saving preprocessed data...')
 
-        processed_train.save(dirpath=data_dir, filename='train.dill')
-        processed_test.save(dirpath=data_dir, filename='test.dill')
-        processed_val.save(dirpath=data_dir, filename='val.dill')
+        processed_train.save(dirpath=pp_dir, filename='train.dill')
+        processed_test.save(dirpath=pp_dir, filename='test.dill')
+        processed_val.save(dirpath=pp_dir, filename='val.dill')
 
-        pre.save(dirpath=data_dir)
+        pre.save(dirpath=pp_dir)
 
         click.echo('Saving corpus questions and documents...')
-        corpus_d_path = os.path.join(data_dir, 'documents.dill')
+        corpus_d_path = os.path.join(pp_dir, 'documents.dill')
         dill.dump(corpus_d, open(corpus_d_path, 'wb'))
-        corpus_q_path = os.path.join(data_dir, 'questions.dill')
+        corpus_q_path = os.path.join(pp_dir, 'questions.dill')
         dill.dump(corpus_d, open(corpus_q_path, 'wb'))
 
     except KeyError:
