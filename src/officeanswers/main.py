@@ -52,6 +52,7 @@ def prepare_and_preprocess(ctx, save: bool=False):
     click.echo('Preparing data model...')
 
     cfg = ctx.obj['CONFIG']
+    net_name = cfg.net_name
     pp_dir = cfg.paths['preprocess_dir']
 
     if not os.path.exists(pp_dir):
@@ -120,20 +121,21 @@ def prepare_and_preprocess(ctx, save: bool=False):
     click.echo('Saving preprocessed data...')
 
     processed_train.save(dirpath=pp_dir,
-                         filename=cfg.inputs['train']['datapack'])
+                         name=net_name + "_train.dill")
     processed_test.save(dirpath=pp_dir,
-                        filename=cfg.inputs['test']['datapack'])
+                        name=net_name + "_test.dill")
     processed_val.save(dirpath=pp_dir,
-                       filename=cfg.inputs['valid']['datapack'])
+                       name=net_name + "_valid.dill")
 
-    pre.save(dirpath=pp_dir)
+    pre.save(dirpath=pp_dir,
+             name=cfg.net_name)
 
     click.echo('Saving corpus questions and documents...')
     corpus_d_path = os.path.join(pp_dir,
-                                 cfg.inputs['share']['documents'])
+                                 net_name + "_documents.dill")
     dill.dump(corpus_d, open(corpus_d_path, 'wb'))
     corpus_q_path = os.path.join(pp_dir,
-                                 cfg.inputs['share']['questions'])
+                                 net_name + "_questions.dill")
     dill.dump(corpus_d, open(corpus_q_path, 'wb'))
 
 
@@ -143,13 +145,14 @@ def train(ctx):
     click.echo('Loading preprocessed data...')
 
     cfg = ctx.obj['CONFIG']
+    net_name = cfg.net_name
     pp_dir = cfg.paths['preprocess_dir']
     pr_dir = cfg.paths['processed_dir']
 
     processed_train = datapack.load_datapack(pp_dir,
-                                             cfg.inputs['train']['datapack'])
+                                             name=net_name + "_train.dill")
     processed_val = datapack.load_datapack(pp_dir,
-                                           cfg.inputs['valid']['datapack'])
+                                           name=net_name + "_valid.dill")
 
     task = tasks.Ranking()
     input_shapes = processed_train.context['input_shapes']
@@ -188,13 +191,13 @@ def train(ctx):
 
     click.echo('Saved model...')
     try:
-        model.save(pr_dir)
+        model.save(pr_dir, cfg.net_name)
     except FileExistsError:
         logger.error("File exists already.")
 
     click.echo('\nPredict...')
     processed_test = datapack.load_datapack(pp_dir,
-                                            cfg.inputs['test']['datapack'])
+                                            name=net_name + "_test.dill")
     generator_test = generators.PointGenerator(processed_test,
                                                task,
                                                stage='train')
@@ -213,12 +216,13 @@ def predict(ctx):
     click.echo('Running predictions...')
 
     cfg = ctx.obj['CONFIG']
+    net_name = cfg.net_name
     pp_dir = cfg.paths['preprocess_dir']
     pr_dir = cfg.paths['processed_dir']
 
     model_type = cfg.model['type']
     corpus_d_path = os.path.join(pp_dir,
-                                 cfg.inputs['share']['documents'])
+                                 net_name + "_documents.dill")
 
     docs = dill.load(open(corpus_d_path, 'rb'))
     doc_lookup = list(docs.keys())
@@ -229,11 +233,12 @@ def predict(ctx):
     docs_df['QID'] = 'Q'
 
     task = tasks.Ranking()
-    pre = engine.load_preprocessor(dirpath=pp_dir)
+    pre = engine.load_preprocessor(dirpath=pp_dir,
+                                   name=net_name)
 
     click.echo('Loading model...')
     if model_type.lower() == 'dssm':
-        model = engine.load_model(pr_dir)
+        model = engine.load_model(pr_dir, net_name)
         query = click.prompt("What do you want to search?", type=str)
         while query and query != 'exit':
             query_df = docs_df.copy()
