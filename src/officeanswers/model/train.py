@@ -1,6 +1,7 @@
 import logging
+import typing
 
-from util import Config
+from officeanswers.util import Config
 
 from matchzoo import datapack
 from matchzoo import generators
@@ -10,7 +11,7 @@ from matchzoo import models
 logger = logging.getLogger(__name__)
 
 
-def train(config: Config) -> None:
+def train(config: Config) -> typing.List[typing.Tuple[str, float]]:
     logger.info('Loading preprocessed data...')
 
     net_name = config.net_name
@@ -18,9 +19,9 @@ def train(config: Config) -> None:
     pr_dir = config.paths['processed_dir']
 
     processed_train = datapack.load_datapack(pp_dir,
-                                             name=net_name + "_train.dill")
+                                             name=net_name + "_train")
     processed_val = datapack.load_datapack(pp_dir,
-                                           name=net_name + "_valid.dill")
+                                           name=net_name + "_valid")
 
     task = tasks.Ranking()
     input_shapes = processed_train.context['input_shapes']
@@ -65,14 +66,17 @@ def train(config: Config) -> None:
 
     logger.info('\nPredict...')
     processed_test = datapack.load_datapack(pp_dir,
-                                            name=net_name + "_test.dill")
+                                            name=net_name + "_test")
     generator_test = generators.PointGenerator(processed_test,
                                                task,
                                                stage='train')
     outputs = model.evaluate_generator(generator_test)
+    results = []
     if outputs and len(outputs):
         loss, metrics = outputs[0], outputs[1:]
         metric_labels = model.params['metrics']
         logger.info(f"Test loss: {loss}")
         for name, out in zip(metric_labels, metrics):
             logger.info(f"{name}: {out}")
+            results.append((name, out))
+    return results

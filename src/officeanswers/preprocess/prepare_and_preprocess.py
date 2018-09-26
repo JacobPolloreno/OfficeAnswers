@@ -3,9 +3,9 @@ import logging
 import os
 import typing
 
-from ingestion import DSSMPrepare
-from ingestion import DSSMFormatter
-from util import Config
+from officeanswers.ingestion import DSSMPrepare
+from officeanswers.ingestion import DSSMFormatter
+from officeanswers.util import Config
 
 from matchzoo import preprocessor
 
@@ -108,11 +108,11 @@ def preprocess(config: Config,
     logger.info('Saving preprocessed data...')
 
     processed_train.save(dirpath=pp_dir,
-                         name=net_name + "_train.dill")
+                         name=net_name + "_train")
     processed_test.save(dirpath=pp_dir,
-                        name=net_name + "_test.dill")
+                        name=net_name + "_test")
     processed_val.save(dirpath=pp_dir,
-                       name=net_name + "_valid.dill")
+                       name=net_name + "_valid")
 
     pre.save(dirpath=pp_dir,
              name=config.net_name)
