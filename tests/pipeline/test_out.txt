@@ -1,0 +1,5 @@
+D2	0.44287338852882385	Ice formations in the Titlis glacier cave
+D5	0.3085955083370209	In physics , circular motion is a movement of an object along the circumference of a circle or rotation along a circular path .
+D8	0.25644809007644653	The equations of motion describe the movement of the center of mass of a body .
+D1	0.1931701898574829	The ice facade is approximately 60 m high
+D4	0.1426481306552887	Glacier caves are often called ice caves , but this term is properly used to describe bedrock caves that contain year-round ice .
