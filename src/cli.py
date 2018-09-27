@@ -6,10 +6,10 @@ import click
 import logging
 import os
 
-from preprocess import prepare_and_preprocess
-from train import train as model_train
-from train import predict as model_predict
-from util import Config
+from officeanswers.preprocess import prepare_and_preprocess
+from officeanswers.model import train as model_train
+from officeanswers.model import predict as model_predict
+from officeanswers.util import Config
 
 from matchzoo import engine
 

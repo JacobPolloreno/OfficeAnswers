@@ -5,7 +5,7 @@ import pandas as pd
 import typing
 import os
 
-from officeanswers.util import Config
+from ..util import Config
 
 from matchzoo import engine
 from matchzoo import generators

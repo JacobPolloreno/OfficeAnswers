@@ -43,19 +43,19 @@ cp sample.config custom.config
 #### Step 2: Prepare and Preprocess
 ```sh
 cd OfficeAnswers
-python src/officeanswers/main.py configs/custom.config prepare_and_preprocess
+python src/main.py configs/custom.config prepare_and_preprocess
 ```
 
 #### Step 3: Train
 ```sh
 cd OfficeAnswers
-python src/officeanswers/main.py configs/custom.config train
+python src/main.py configs/custom.config train
 ```
 
 #### Step 4: Predict
 ```sh
 cd OfficeAnswers
-python src/officeanswers/main.py configs/custom.config predict
+python src/main.py configs/custom.config predict
 ```
 
 ### How should my data be formatted?

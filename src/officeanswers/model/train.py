@@ -1,7 +1,7 @@
 import logging
 import typing
 
-from officeanswers.util import Config
+from ..util import Config
 
 from matchzoo import datapack
 from matchzoo import generators

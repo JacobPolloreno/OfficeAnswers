@@ -3,9 +3,9 @@ import logging
 import os
 import typing
 
-from officeanswers.ingestion import DSSMPrepare
-from officeanswers.ingestion import DSSMFormatter
-from officeanswers.util import Config
+from ..ingestion import DSSMPrepare
+from ..ingestion import DSSMFormatter
+from ..util import Config
 
 from matchzoo import preprocessor
 
