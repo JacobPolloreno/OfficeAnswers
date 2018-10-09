@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 def prepare(config: Config,
             save_relations: bool=False) -> typing.Tuple:
+    """
+    Prepare tab-seperated corpus that's been formatted properly
+        with DSSMFormatter for preprocessing
+    """
     logger.info('Preparing data model...')
 
     pp_dir = config.paths['preprocess_dir']
@@ -97,22 +101,32 @@ def preprocess(config: Config,
         raise NotImplementedError(f"Model type {model_type} not implemented")
 
     inputs = {'questions': corpus_q, 'documents': corpus_d}
+
+    logger.info("Transforming and saving train data...")
     train = formatter.from_inputs(inputs, relations['train'], stage='train')
-    test = formatter.from_inputs(inputs, relations['test'], stage='train')
-    val = formatter.from_inputs(inputs, relations['valid'], stage='train')
-
     processed_train = pre.fit_transform(train.values, stage='train')
-    processed_val = pre.transform(val.values, stage='train')
-    processed_test = pre.transform(test.values, stage='train')
-
-    logger.info('Saving preprocessed data...')
-
     processed_train.save(dirpath=pp_dir,
                          name=net_name + "_train")
-    processed_test.save(dirpath=pp_dir,
-                        name=net_name + "_test")
+    del train
+    del processed_train
+
+    logger.info("Transforming and saving validation data...")
+    val = formatter.from_inputs(inputs, relations['valid'], stage='train')
+    processed_val = pre.transform(val.values, stage='train')
     processed_val.save(dirpath=pp_dir,
                        name=net_name + "_valid")
+
+    del val
+    del processed_val
+
+    logger.info("Transforming and saving test data...")
+    test = formatter.from_inputs(inputs, relations['test'], stage='train')
+    processed_test = pre.transform(test.values, stage='train')
+    processed_test.save(dirpath=pp_dir,
+                        name=net_name + "_test")
+
+    del test
+    del processed_test
 
     pre.save(dirpath=pp_dir,
              name=config.net_name)
