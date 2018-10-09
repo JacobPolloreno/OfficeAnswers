@@ -1,5 +1,6 @@
-# Office Answers
-Organization-specific informational retrieval system.
+# WorkBuddy
+
+Workbuddy helps you get to the real work by create a search engine for company information. It leverages neural information retrieval to build embeddings, the cache and serve them through a REST API.
 
 #### Installation
 
@@ -9,7 +10,7 @@ cd OfficeAnswers
 ```
 
 ##### Locally with virtualenv
-**Assumes _virtualenv_ is installed. If not `pip install virtualenv`**
+###### **Assumes _virtualenv_ is installed. If not `pip install virtualenv`**
 
 ```sh
 source venv/bin/activate
@@ -49,13 +50,13 @@ python src/main.py configs/custom.config prepare_and_preprocess
 #### Step 3: Train
 ```sh
 cd OfficeAnswers
-python src/main.py configs/custom.config train
+python src/cli.py configs/custom.config train
 ```
 
 #### Step 4: Predict
 ```sh
 cd OfficeAnswers
-python src/main.py configs/custom.config predict
+python src/cli.py configs/custom.config predict
 ```
 
 ### How should my data be formatted?
