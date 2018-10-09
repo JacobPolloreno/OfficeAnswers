@@ -48,7 +48,7 @@ class BaseFormatter(abc.ABC):
         for f in files:
             if not os.path.exists(f):
                 error_msg = f"`{f}` cannot be found." + \
-                        "File should be generated using Prepare"
+                    "File should be generated using Prepare"
                 logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
             if not os.path.isdir(f):
@@ -151,7 +151,7 @@ class DSSMFormatter(BaseFormatter):
                     tokens = line.split()
                     if len(tokens) != 3:
                         error_msg = "Invalid format for relation text." + \
-                                "Should be `label questionID documentID`"
+                            "Should be `label questionID documentID`"
                         logger.error(error_msg)
                         raise ValueError(error_msg)
                     relations.append((tokens[0], tokens[1], tokens[2]))
@@ -163,7 +163,7 @@ class DSSMFormatter(BaseFormatter):
                     tokens = line.split()
                     if len(tokens) < 2:
                         error_msg = "Invalid format for question text." + \
-                                "Should be `questionID question"
+                            "Should be `questionID question"
                         logger.error(error_msg)
                         raise ValueError(error_msg)
                     corpus_q[tokens[0]] = "".join(tokens[1:])
@@ -175,7 +175,7 @@ class DSSMFormatter(BaseFormatter):
                     tokens = line.split()
                     if len(tokens) < 2:
                         error_msg = "Invalid format for document text." + \
-                                "Should be `documentID document"
+                            "Should be `documentID document"
                         logger.error(error_msg)
                         raise ValueError(error_msg)
                     corpus_d[tokens[0]] = "".join(tokens[1:])

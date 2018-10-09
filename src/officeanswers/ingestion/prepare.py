@@ -113,6 +113,7 @@ class DSSMPrepare(BasePrepare):
         corpus_q: dict = {}
         corpus_d: dict = {}
         relations = []
+
         try:
             with open(path, 'r') as f:
                 for line in f.readlines():
