@@ -86,52 +86,6 @@ def predict(ctx, num_largest):
 
 @cli.command()
 @click.pass_context
-def visualize_embeddings(ctx):
-    from tensorflow.contrib.tensorboard.plugins import projector
-
-    logger.info("Visualize embeddings ...")
-
-    config = ctx.obj['CONFIG']
-    docs, _ = build_document_embeddings(config)
-
-    with open('log/metadata.tsv', 'w') as f:
-        for doc in enumerate(docs):
-            f.write(f"D{doc}" + '\n')
-
-    import tensorflow as tf
-    import tensorflow_hub as hub
-
-    logger.info("Download universal sentence encoder...")
-
-    module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
-    embed = hub.Module(module_url)
-
-    with tf.Session() as session:
-        session.run([tf.global_variables_initializer(),
-                     tf.tables_initializer()])
-        embeds = session.run(embed(docs))
-
-    with tf.Session() as sess:
-        tf_embed = tf.Variable(embeds, trainable=False, name='embedding')
-        # X = tf.Variable([0.0], trainable=False, name='embedding')
-        # place = tf.placeholder(tf.float32, shape=embeds.shape)
-        # set_x = tf.assign(X, place, validate_shape=False)
-        sess.run(tf.global_variables_initializer())
-        # sess.run(set_x, feed_dict={place: embeds})
-
-        summary_writer = tf.summary.FileWriter('log', sess.graph)
-        config = projector.ProjectorConfig()
-        embedding_conf = config.embeddings.add()
-        embedding_conf.tensor_name = 'embedding'
-        embedding_conf.metadata_path = 'metadata.tsv'
-        projector.visualize_embeddings(summary_writer, config)
-
-        saver = tf.train.Saver()
-        saver.save(sess, os.path.join('log', "model.ckpt"))
-
-
-@cli.command()
-@click.pass_context
 def search(ctx):
     from officeanswers.search import build_search_index
 
