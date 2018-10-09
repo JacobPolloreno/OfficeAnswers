@@ -128,3 +128,33 @@ class DSSMPrepare(BasePrepare):
             logger.error(f"Error opening file `{path}`")
             raise
         return corpus_q, corpus_d, relations
+
+    def from_corpus(self, paths: typing.List[str]) -> typing.Tuple:
+        """Format dataset for preprocessing
+
+        Args:
+            path (str): Path to corpus.txt file
+        """
+        logger.info("Building dataframe from delimeted file")
+
+        hashid_q: dict = {}
+        hashid_d: dict = {}
+        corpus_q: dict = {}
+        corpus_d: dict = {}
+        relations = []
+
+        try:
+            for path in paths:
+                with open(path, 'r') as f:
+                    for line in f.readlines():
+                        line = line.strip()
+                        q, d, label = self._parse_line(line)
+                        qid = self._get_text_id(hashid_q, q, 'Q')
+                        did = self._get_text_id(hashid_d, d, 'D')
+                        corpus_q[qid] = q
+                        corpus_d[did] = d
+                        relations.append((label, qid, did))
+        except IOError:
+            logger.error(f"Error opening file `{path}`")
+            raise
+        return corpus_q, corpus_d, relations

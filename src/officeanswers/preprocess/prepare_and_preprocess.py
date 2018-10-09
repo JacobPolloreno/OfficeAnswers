@@ -49,7 +49,22 @@ def prepare(config: Config,
         logger.info(error_msg)
         raise FileExistsError(error_msg)
 
-    corpus_q, corpus_d, rels = prep.from_one_corpus(corpus_path)
+    try:
+        custom_path = config.inputs['share']['custom_corpus']
+    except KeyError as e:
+        pass
+
+    if custom_path and not os.path.exists(custom_path):
+        error_msg = f"{custom_path} does not exists.\n" + \
+            "Check configuration file"
+        logger.info(error_msg)
+        raise FileExistsError(error_msg)
+
+    if not custom_path:
+        corpus_q, corpus_d, rels = prep.from_one_corpus(corpus_path)
+    else:
+        corpus_q, corpus_d, rels = prep.from_corpus([corpus_path,
+                                                     custom_path])
 
     logger.info(f"total questions: {len(corpus_q)}")
     logger.info(f"total documents: {len(corpus_d)}")
