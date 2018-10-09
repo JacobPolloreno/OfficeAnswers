@@ -77,12 +77,13 @@ def train(config: Config) -> None:
     weights_file = f"{net_name}.weights.%d"
 
     logger.info('Training model...')
+    verbose = train_params['verbose'] if train_params['verbose'] else 1
     for epoch in range(1, train_params['epochs'] + 1):
-        history = model.fit_generator(
+        model.fit_generator(
             generator_train,
             steps_per_epoch=train_params['steps_per_epoch'],
             epochs=1,
-            verbose=train_params['verbose'])
+            verbose=verbose)
 
         res = {}
         res['MAP'] = 0.0
@@ -100,6 +101,9 @@ def train(config: Config) -> None:
             num_valid += 1
 
         generator_val.reset()
+        res['VAL LOSS'] = model._backend.evaluate_generator(
+            generator_val,
+            verbose=0)
         logger.info(f"Iter: {epoch} / {train_params['epochs'] + 1}\t" +
                     '\t'.join(
                         [f"{k}={v / num_valid:.3f}" for k, v in res.items()]))
