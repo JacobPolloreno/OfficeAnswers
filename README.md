@@ -1,4 +1,9 @@
+[SLIDES](https://drive.google.com/open?id=1GZxIdP2MOtHSkg2Qy3kq2UzXu_VVXDwCN1A1epawk7Y) 
 # WorkBuddy
+
+<p align='center'>
+<img src='./assets/sys_arch.png'  alt="WorkBuddy System Architecture"/>
+</p>
 
 Workbuddy helps you get to the real work by create a search engine for company information. It leverages neural information retrieval to build embeddings, the cache and serve them through a REST API.
 
