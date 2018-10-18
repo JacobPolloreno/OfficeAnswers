@@ -5,6 +5,7 @@ import typing
 
 from ..ingestion import DSSMPrepare
 from ..ingestion import DSSMFormatter
+from .preprocessor import DSSMUEPreprocessor
 from ..util import Config
 
 from matchzoo import preprocessor
@@ -31,7 +32,7 @@ def prepare(config: Config,
         raise FileExistsError(error_msg)
 
     model_type = config.model['type']
-    if model_type.lower() == 'dssm':
+    if model_type.lower() == 'dssm' or model_type.lower() == 'dssm_ue':
         prep = DSSMPrepare()
     else:
         raise NotImplementedError(f"Model type {model_type} not implemented")
@@ -60,7 +61,7 @@ def prepare(config: Config,
         logger.info(error_msg)
         raise FileExistsError(error_msg)
 
-    if not custom_path:
+    if not custom_path or custom_path == corpus_path:
         corpus_q, corpus_d, rels = prep.from_one_corpus(corpus_path)
     else:
         corpus_q, corpus_d, rels = prep.from_corpus([corpus_path,
@@ -112,6 +113,9 @@ def preprocess(config: Config,
     if model_type.lower() == 'dssm':
         formatter = DSSMFormatter()
         pre = preprocessor.DSSMPreprocessor()
+    elif model_type.lower() == 'dssm_ue':
+        formatter = DSSMFormatter()
+        pre = DSSMUEPreprocessor()
     else:
         raise NotImplementedError(f"Model type {model_type} not implemented")
 
@@ -119,7 +123,10 @@ def preprocess(config: Config,
 
     logger.info("Transforming and saving train data...")
     train = formatter.from_inputs(inputs, relations['train'], stage='train')
-    processed_train = pre.fit_transform(train.values, stage='train')
+    logger.info(f"Size of train data {len(train)}...")
+    pre = pre.fit(train.values)
+    processed_train = pre.transform(train.values, stage='train')
+    processed_train.DATA_FILENAME = net_name + '_train'
     processed_train.save(dirpath=pp_dir,
                          name=net_name + "_train")
     del train
@@ -127,7 +134,11 @@ def preprocess(config: Config,
 
     logger.info("Transforming and saving validation data...")
     val = formatter.from_inputs(inputs, relations['valid'], stage='train')
-    processed_val = pre.transform(val.values, stage='train')
+    logger.info(f"Size of valid data {len(val)}...")
+    processed_val = pre.transform(val.values,
+                                  stage='test',
+                                  cache=False)
+    processed_val.DATA_FILENAME = net_name + '_valid'
     processed_val.save(dirpath=pp_dir,
                        name=net_name + "_valid")
 
@@ -135,8 +146,13 @@ def preprocess(config: Config,
     del processed_val
 
     logger.info("Transforming and saving test data...")
-    test = formatter.from_inputs(inputs, relations['test'], stage='train')
-    processed_test = pre.transform(test.values, stage='train')
+    test = formatter.from_inputs(inputs, relations['test'],
+                                 stage='train')
+    logger.info(f"Size of test data {len(test)}...")
+    processed_test = pre.transform(test.values,
+                                   stage='test',
+                                   cache=False)
+    processed_test.DATA_FILENAME = net_name + '_test'
     processed_test.save(dirpath=pp_dir,
                         name=net_name + "_test")
 
@@ -150,12 +166,17 @@ def preprocess(config: Config,
     corpus_d_path = os.path.join(pp_dir,
                                  net_name + "_documents.dill")
     dill.dump(corpus_d, open(corpus_d_path, 'wb'))
+
     corpus_q_path = os.path.join(pp_dir,
                                  net_name + "_questions.dill")
-    dill.dump(corpus_d, open(corpus_q_path, 'wb'))
+    dill.dump(corpus_q, open(corpus_q_path, 'wb'))
 
 
 def prepare_and_preprocess(config: Config,
                            save_relations: bool=False) -> None:
     corpus_q, corpus_d, relations = prepare(config, save_relations)
     preprocess(config, corpus_d, corpus_q, relations)
+
+    logger.info(f"{len(relations['train'])} train relations")
+    logger.info(f"{len(relations['valid'])} val relations")
+    logger.info(f"{len(relations['test'])} test relations")

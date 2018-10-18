@@ -36,6 +36,14 @@ def mean_average_precision(y_true, y_pred, rel_threshold=0.0):
     return s
 
 
+def mean_reciprocal_rank(y_true, y_pred):
+    s = 0.
+    y_true = _to_list(np.squeeze(y_true).tolist())
+    y_pred = _to_list(np.squeeze(y_pred).tolist())
+    c = list(zip(y_true, y_pred))
+    return s
+
+
 def ndcg(k=10):
     def top_k(y_true, y_pred, rel_threshold=0.):
         if k <= 0.:

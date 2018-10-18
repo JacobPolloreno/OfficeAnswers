@@ -1,10 +1,13 @@
 import logging
 import os
+import tensorflow as tf
 
 from .metrics import mean_average_precision
 from .metrics import ndcg
+from .models import UEModel
 from ..util import Config
 
+from keras import backend as K
 from matchzoo import datapack
 from matchzoo import generators
 from matchzoo import tasks
@@ -41,6 +44,9 @@ def train(config: Config) -> None:
         processed_val = datapack.load_datapack(pp_dir,
                                                name=net_name + "_valid")
 
+    logger.info(f"Size of processed train {len(processed_train)}")
+    logger.info(f"Size of processed val {len(processed_val)}")
+
     task = tasks.Ranking()
     input_shapes = processed_train.context['input_shapes']
 
@@ -50,13 +56,24 @@ def train(config: Config) -> None:
         batch_size=config.inputs['train']['batch_size'],
         stage='train')
     del processed_train
-    generator_val = generators.ListGenerator(processed_val)
+    generator_val = generators.ListGenerator(processed_val,
+                                             stage='train')
     del processed_val
 
     logger.info('Loading model...')
     model_type = config.model['type']
     if model_type.lower() == 'dssm':
         model = models.DSSMModel()
+    elif model_type.lower() == 'dssm_ue':
+        try:
+            tfhub_cache_dir = os.path.abspath(config.paths['TFHUB_CACHE_DIR'])
+            logger.info(f"Using {tfhub_cache_dir} as TFHUB cache")
+            if not os.path.exists(tfhub_cache_dir):
+                raise IOError(f"Model type {model_type}. Cache DIR not found")
+            os.environ['TFHUB_CACHE_DIR'] = tfhub_cache_dir
+            model = UEModel()
+        except KeyError:
+            raise IOError(f"Model type {model_type}. Cache DIR not found")
     else:
         raise NotImplementedError(f"Model type {model_type} not implemented")
 
@@ -78,43 +95,53 @@ def train(config: Config) -> None:
 
     logger.info('Training model...')
     verbose = train_params['verbose'] if train_params['verbose'] else 1
-    for epoch in range(1, train_params['epochs'] + 1):
-        model.fit_generator(
-            generator_train,
-            steps_per_epoch=train_params['steps_per_epoch'],
-            epochs=1,
-            verbose=verbose)
+    with tf.Session() as session:
+        K.set_session(session)
+        session.run(tf.global_variables_initializer())
+        session.run(tf.tables_initializer())
+        for epoch in range(1, train_params['epochs'] + 1):
+            model.fit_generator(
+                generator_train,
+                steps_per_epoch=train_params['steps_per_epoch'],
+                epochs=1,
+                verbose=verbose)
 
-        res = {}
-        res['MAP'] = 0.0
-        res['NCDG@3'] = 0.0
-        res['NCDG@5'] = 0.0
-        num_valid = 0
-        for i in range(len(generator_val)):
-            input_data, y_true = generator_val[i]
-            y_pred = model.predict(input_data,
-                                   batch_size=len(y_true),
-                                   verbose=0)
-            res['MAP'] += mean_average_precision(y_true, y_pred)
-            res['NCDG@3'] += ndcg(3)(y_true, y_pred)
-            res['NCDG@5'] += ndcg(5)(y_true, y_pred)
-            num_valid += 1
+            res = {}
+            res['MAP'] = 0.0
+            res['NCDG@3'] = 0.0
+            res['NCDG@5'] = 0.0
+            num_valid = 0
+            for i in range(len(generator_val)):
+                input_data, y_true = generator_val[i]
+                y_pred = model.predict(input_data,
+                                       batch_size=len(y_true),
+                                       verbose=0)
+                res['MAP'] += mean_average_precision(y_true, y_pred)
+                res['NCDG@3'] += ndcg(3)(y_true, y_pred)
+                res['NCDG@5'] += ndcg(5)(y_true, y_pred)
+                num_valid += 1
+            generator_val.reset()
 
-        generator_val.reset()
-        res['VAL LOSS'] = model._backend.evaluate_generator(
-            generator_val,
-            verbose=0)
-        logger.info(f"Iter: {epoch} / {train_params['epochs'] + 1}\t" +
+            try:
+                logger.info(
+                    f"Iter: {epoch} / {train_params['epochs'] + 1}\t" +
                     '\t'.join(
-                        [f"{k}={v / num_valid:.3f}" for k, v in res.items()]))
+                        [f"{k}={v / num_valid:.5f}" for k, v in res.items()]))
+            except ZeroDivisionError as e:
+                for k, v in res.items():
+                    logger.error(f"{k} = {v} / {num_valid}")
+                raise
 
-        if (epoch + 1) % save_weights_iters == 0:
-            model._backend.save_weights(
-                os.path.join(pr_dir, weights_file % (epoch + 1)))
-            logger.info(f"Saved model at iter {epoch}")
+            if (epoch + 1) % save_weights_iters == 0:
+                model._backend.save_weights(
+                    os.path.join(pr_dir, weights_file % (epoch + 1)))
+                logger.info(f"Saved model at iter {epoch}")
 
-    logger.info('Saving model...')
-    try:
-        model.save(pr_dir, config.net_name)
-    except FileExistsError:
-        logger.error("File exists already.")
+        logger.info('Saving model...')
+        try:
+            model.save(pr_dir, config.net_name)
+        except FileExistsError:
+            logger.error("File exists already.")
+        except Exception as e:
+            logger.error(str(e))
+            raise

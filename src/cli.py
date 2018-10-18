@@ -111,10 +111,11 @@ def search(ctx):
         print(dense_input.shape)
 
         idxs, dists = search.knnQuery(dense_input, k=3)
+        scores = list(zip(idxs, dists))
+        scores.sort(key=lambda x: x[1], reverse=True)
 
-        for idx, dist in zip(idxs, dists):
-            # print(f'\nCosine Dist: {dist:.4f}\n---------------\n', docs[idx])
-            print("\n----------------\n", docs[idx])
+        for idx, dist in scores:
+            print(f'\nCosine Dist: {dist:.4f}\n---------------\n', docs[idx])
 
         query = click.prompt("\nWhat do you want to search?\n", type=str)
 

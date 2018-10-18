@@ -112,7 +112,9 @@ class DSSMPrepare(BasePrepare):
         hashid_d: dict = {}
         corpus_q: dict = {}
         corpus_d: dict = {}
-        relations = []
+        raw_relations = []
+        count_relations: dict = {}
+        no_right_wrong: int = 0
 
         try:
             with open(path, 'r') as f:
@@ -123,10 +125,26 @@ class DSSMPrepare(BasePrepare):
                     did = self._get_text_id(hashid_d, d, 'D')
                     corpus_q[qid] = q
                     corpus_d[did] = d
-                    relations.append((label, qid, did))
+                    raw_relations.append((label, qid, did))
+                    if qid not in count_relations:
+                        count_relations[qid] = {'right': False, 'wrong': False}
+                    if int(label) == 1:
+                        count_relations[qid]['right'] = True
+                    else:
+                        count_relations[qid]['wrong'] = True
         except IOError:
             logger.error(f"Error opening file `{path}`")
             raise
+        relations = []
+        for r in raw_relations:
+            label, qid, did = r
+            qid_count = count_relations[qid]
+            if qid_count['right'] and qid_count['wrong']:
+                relations.append((label, qid, did))
+            else:
+                no_right_wrong += 1
+        logger.info(f"Removed {no_right_wrong} pairs " +
+                    "which had no right or wrong answers")
         return corpus_q, corpus_d, relations
 
     def from_corpus(self, paths: typing.List[str]) -> typing.Tuple:
@@ -141,7 +159,9 @@ class DSSMPrepare(BasePrepare):
         hashid_d: dict = {}
         corpus_q: dict = {}
         corpus_d: dict = {}
-        relations = []
+        raw_relations = []
+        count_relations: dict = {}
+        no_right_wrong: int = 0
 
         try:
             for path in paths:
@@ -153,8 +173,24 @@ class DSSMPrepare(BasePrepare):
                         did = self._get_text_id(hashid_d, d, 'D')
                         corpus_q[qid] = q
                         corpus_d[did] = d
-                        relations.append((label, qid, did))
+                        raw_relations.append((label, qid, did))
+                        if qid not in count_relations:
+                            count_relations[qid] = {'right': False, 'wrong': False}
+                        if int(label) == 1:
+                            count_relations[qid]['right'] = True
+                        else:
+                            count_relations[qid]['wrong'] = True
         except IOError:
             logger.error(f"Error opening file `{path}`")
             raise
+        relations = []
+        for r in raw_relations:
+            label, qid, did = r
+            qid_count = count_relations[qid]
+            if qid_count['right'] and qid_count['wrong']:
+                relations.append((label, qid, did))
+            else:
+                no_right_wrong += 1
+        logger.info(f"Removed {no_right_wrong} pairs " +
+                    "which had no right or wrong answers")
         return corpus_q, corpus_d, relations
