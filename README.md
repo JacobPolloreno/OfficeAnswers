@@ -17,8 +17,8 @@ Workbuddy helps you get to the real work by create a search engine for company i
 1. Build embeddings of query and documents using DSSM model(see below).
 	- Use cosine similarity with a max margin loss that distinguishes from positive/relevant answers and negative/irrelevant answers to train the model. The result of training will be a scoring function that during inference, given a query and document, output a retreival score.
 2. Cache document embeddings in [NMSLIB](https://nmslib.github.io/nmslib/#)
-3. Given a query, we'll compute it's embeddings then perform KNN search on NMSLIB.
-4. Output the results, ranked using the scoring function.
+3. Given a query, we'll compute its embeddings, using the DSSM model, then perform KNN search with NMSLIB.
+4. The result with be a retrieval score for the given query-document pairs
 
 #### Installation
 
