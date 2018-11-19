@@ -8,9 +8,9 @@
 <img src='./assets/sys_arch.png'  alt="WorkBuddy System Architecture"/>
 </p>
 
-Workbuddy helps you get to the real work by create a search engine for company information. It leverages neural information retrieval to build embeddings, the cache and serve them through a REST API.
+Workbuddy helps you get to the real work by creating a search engine for company information. It leverages neural information retrieval to search for an answer in an embedding space.
 
-### How it works?
+### How does Workbuddy work?
 
 **Algorithm**:
 
@@ -108,8 +108,8 @@ For each query and document pair we'll get a scoring function that output a scor
 #### Dataset
 - [WikiQA](https://www.microsoft.com/en-us/download/details.aspx?id=52419) dataset which contains a set of question and sentence pairs.
 	-  3,047 questions and 29,258 sentences in the dataset, where 1,473 sentences were labeled as answer sentences to their corresponding questions. 
-- Slack Data Dump from Insight Data Science
-- HR question and sentence pairs from an Insight Data Science survey
+- Slack data Dump for technical questions
+- Survey data HR question and answer pairs
 
 WikiQA was used to build the embeddings along with the custom data(Slack + HR).
 ### How should my data be formatted?
